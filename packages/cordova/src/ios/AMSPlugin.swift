@@ -3,7 +3,10 @@ class AMSPlugin: CDVPlugin {
     static let testApplicationID = "ca-app-pub-3940256099942544~1458002511"
     var banner: AMSBanner!
     var readyCallbackId: String!
-
+    
+    var view: UIView {
+        return self.viewController.view
+    }
     override func pluginInitialize() {
         super.pluginInitialize()
 
@@ -211,31 +214,16 @@ class AMSPlugin: CDVPlugin {
     }
 
     func getAdSize(_ opts: NSDictionary) -> GADAdSize {
-        if let adSizeType = opts.value(forKey: "adSize") as? Int {
-            switch adSizeType {
-            case 0:
-                return kGADAdSizeBanner
-            case 1:
-                return kGADAdSizeLargeBanner
-            case 2:
-                return kGADAdSizeMediumRectangle
-            case 3:
-                return kGADAdSizeFullBanner
-            case 4:
-                return kGADAdSizeLeaderboard
-            default: break
-            }
-        }
-        guard let adSizeDict = opts.value(forKey: "size") as? NSDictionary,
-            let width = adSizeDict.value(forKey: "width") as? Int,
-            let height = adSizeDict.value(forKey: "height") as? Int
-            else {
-                if UIDevice.current.orientation.isPortrait {
-                    return kGADAdSizeSmartBannerPortrait
-                } else {
-                    return kGADAdSizeSmartBannerLandscape
-                }
-        }
-        return GADAdSizeFromCGSize(CGSize(width: width, height: height))
+       let frame = { () -> CGRect in
+           // Here safe area is taken into account, hence the view frame is used
+           // after the view has been laid out.
+           if #available(iOS 11.0, *) {
+               return view.frame.inset(by: view.safeAreaInsets)
+           } else {
+               return view.frame
+           }
+       }()
+       let viewWidth = frame.size.width
+        return GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(viewWidth)
     }
 }
